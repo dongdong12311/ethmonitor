@@ -97,17 +97,17 @@ class API(Param):
             return []
         return  get.json()
     
-    def best_ask(self):
+    def best_ask(self,defaultprice):
         try:
             return self.GetDepth()['asks'][0][0]
         except:
-            return None
-    def best_bid(self):
+            return defaultprice
+    def best_bid(self,defaultprice):
         try:
     
             return self.GetDepth()['bids'][0][0]
         except:
-            return None
+            return defaultprice
     def get_position(self):
         
         try:
@@ -266,6 +266,7 @@ class Account(Param):
         results = self.api.get_position()
         if results is None:
             return 
+        position = None
         if len(results['holding']) > 1:
             print(results)
             sys.exit()
@@ -277,16 +278,14 @@ class Account(Param):
             "tradeside,qty,avg_cost,ratio,liqui_price"
             "res['long_avg_cost'] 由于okex采用的是标记价格  我们的浮动盈亏不应该采用标记价格"
             "获取最高买价"
-            price = self.api.best_bid()
-            if price is  None:
-                return
+            price = self.api.best_bid(float(res['long_avg_cost']))
             rate = (price-float(res['long_avg_cost']))/float(res['long_avg_cost'])*100*self.beishu
             position = Position(1,res['long_avail_qty'],res['long_avg_cost'],rate,res['long_liqui_price'])
         if res['short_qty'] != '0':
             "持有空头"
             "tradeside,qty,avg_cost,ratio,liqui_price"
             "最低卖价"
-            price = self.api.best_ask()
+            price = self.api.best_ask(float(res['short_avg_cost']))
             if price is  None:
                 return
             rate = -(price-float(res['short_avg_cost']))/float(res['short_avg_cost'])*100*self.beishu
@@ -322,9 +321,9 @@ class AccountMonitor:
         if abs(position.ratio) > 10 and position.qty > 0 :
             "如果收益超过+-10%"
             if position.tradeside == 1:                
-                price = self.api.best_ask()-0.001
+                price = self.api.best_ask(self.avg_cost)-0.001
             else:
-                price = self.api.best_bid()+0.001
+                price = self.api.best_bid(self.avg_cost)+0.001
             s = '平仓价格'+str(price)+' '
             print(s)
             self.api.close_position(position,str(price))
