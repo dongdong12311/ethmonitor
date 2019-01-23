@@ -278,20 +278,20 @@ class Account(Param):
             "res['long_avg_cost'] 由于okex采用的是标记价格  我们的浮动盈亏不应该采用标记价格"
             "获取最高买价"
             price = self.api.best_bid()
-            if price is not  None:
-                    
-                rate = (price-float(res['long_avg_cost']))/float(res['long_avg_cost'])*100*self.beishu
-                print(rate)
-                position = Position(1,res['long_avail_qty'],res['long_avg_cost'],rate,res['long_liqui_price'])
+            if price is  None:
+                return
+            rate = (price-float(res['long_avg_cost']))/float(res['long_avg_cost'])*100*self.beishu
+            position = Position(1,res['long_avail_qty'],res['long_avg_cost'],rate,res['long_liqui_price'])
         if res['short_qty'] != '0':
             "持有空头"
             "tradeside,qty,avg_cost,ratio,liqui_price"
             "最低卖价"
             price = self.api.best_ask()
-            if price is not  None:
-                rate = -(price-float(res['short_avg_cost']))/float(res['short_avg_cost'])*100*self.beishu
-                position = Position(-1,res['short_avail_qty'],res['short_avg_cost'],rate,res['short_liqui_price'])
-                    
+            if price is  None:
+                return
+            rate = -(price-float(res['short_avg_cost']))/float(res['short_avg_cost'])*100*self.beishu
+            position = Position(-1,res['short_avail_qty'],res['short_avg_cost'],rate,res['short_liqui_price'])
+                
             
         return  position
     
@@ -355,7 +355,6 @@ market  = Market(API)
 a = AccountMonitor(myaccount,market,API)
 while 1:
     time.sleep(0.21)
-    print("监控中")
     b = a.monitor()
 
     
